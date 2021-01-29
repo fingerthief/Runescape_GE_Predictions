@@ -2,21 +2,14 @@ import json
 import csv 
 from urllib.request import urlopen
 import pandas as pd
+import requests
 
-url = "https://secure.runescape.com/m=itemdb_rs/api/graph/11720.json"
+solditems = requests.get('https://secure.runescape.com/m=itemdb_rs/api/graph/11720.json') # (your url)
+data = solditems.json()
+with open('data.json', 'w') as f:
+    json.dump(data, f)
 
-response = urlopen(url)
-
-data = json.loads(response.read())
-
-# Opening JSON file and loading the data 
-# into the variable data 
-# with open('data.json') as json_file: 
-#     data = json.load(json_file) 
-
-arma_data = data['daily'] 
-
-df = pd.read_json (r'arma.json')
+df = pd.read_json (r'data.json')
 export_csv = df.to_csv (r'armadyl.csv', index = None, header=True)
 
 reader = csv.reader(open('armadyl.csv', 'r'))

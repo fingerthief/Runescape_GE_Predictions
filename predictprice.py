@@ -52,33 +52,33 @@ def PredictPrice(dayToPredict):
     data = pd.read_csv('armadyl_final.csv')
     data.head()
     # Let’s select some features to explore more :
-    data = data[['day','daily']]
+    data = data[['day','average']]
     
     # Cases vs Deaths:
-    plt.scatter(data['day'] , data['daily'] , color='blue')
+    plt.scatter(data['day'] , data['average'] , color='blue')
     plt.xlabel('Day')
-    plt.ylabel('Daily Price')
+    plt.ylabel('Average Price')
     plt.show() 
     
     # Generating training and testing data from our data:
     # We are using 80% data for training.
-    train = data[:(int((len(data)*0.8)))]
+    train = data[:(int((len(data)*0.9)))]
     test = data[(int((len(data)*0.2))):]
     
     # Modeling:
     # Using sklearn package to model data :
     regr = linear_model.LinearRegression()
     train_x = np.array(train[['day']])
-    train_y = np.array(train[['daily']])
+    train_y = np.array(train[['average']])
     regr.fit(train_x,train_y)
     # The coefficients:
     print ('coefficients : ',regr.coef_) #Slope
     print ('Intercept : ',regr.intercept_) #Intercept
     # Plotting the regression line:
-    plt.scatter(train['day'], train['daily'], color='blue')
+    plt.scatter(train['day'], train['average'], color='blue')
     plt.plot(train_x, regr.coef_*train_x + regr.intercept_, '-r')
     plt.xlabel('day')
-    plt.ylabel('daily price')
+    plt.ylabel('Average price')
     plt.show()
     
     # Predicting emission for future car:
@@ -89,11 +89,11 @@ def PredictPrice(dayToPredict):
     # Checking various accuracy:
     from sklearn.metrics import r2_score
     test_x = np.array(test[['day']])
-    test_y = np.array(test[['daily']])
+    test_y = np.array(test[['average']])
     test_y_ = regr.predict(test_x)
     print('Mean absolute error: %.2f' % np.mean(np.absolute(test_y_ - test_y)))
     print('Mean sum of squares (MSE): %.2f' % np.mean((test_y_ - test_y) ** 2))
     print('R2-score: %.2f' % r2_score(test_y_ , test_y) )
     return estimated_price
 
-PredictPrice(181)
+PredictPrice(185)
