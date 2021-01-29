@@ -49,7 +49,7 @@ def get_regression_predictions(input_features,intercept,slope):
     return predicted_values
 
 def PredictPrice(dayToPredict):
-    data = pd.read_csv('armadyl_final.csv')
+    data = pd.read_csv('data_final.csv')
     data.head()
     # Let’s select some features to explore more :
     data = data[['day','average']]
