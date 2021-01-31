@@ -1,4 +1,5 @@
 # LSTM for international airline passengers problem with time step regression framing
+import csv
 from operator import concat
 import numpy
 import matplotlib.pyplot as plt
@@ -66,10 +67,11 @@ testPredictPlot = numpy.empty_like(dataset)
 testPredictPlot[:, :] = numpy.nan
 testPredictPlot[len(trainPredict)+(look_back*2)+1:len(dataset)-1, :] = testPredict
 # plot baseline and predictions
-plt.plot(scaler.inverse_transform(dataset))
-plt.plot(trainPredictPlot)
-plt.plot(testPredictPlot)
-plt.show()
+
+plt.plot(scaler.inverse_transform(dataset),label='Base Data')
+plt.plot(trainPredictPlot,label='Train Prediction')
+plt.plot(testPredictPlot,label='Test Prediction')
+#plt.show()
 
 from sklearn.preprocessing import StandardScaler
 data = pandas.read_csv('data_final.csv')
@@ -93,13 +95,13 @@ pred_price = scaler.inverse_transform(pred_price)
 
 print('Est Price: ' + str(pred_price))
 new_Pred = pred_price
-
+preds = []
 for x in range(5):
 	str_pred = str(new_Pred)
 	str_pred = str_pred.replace('[[', '')
 	str_pred = str_pred.replace(']]', '')
 	df_new.loc[len(df_new)] = float(str_pred)
-	df_new.index = df_new.index + x  # shifting index
+	df_new.index = df_new.index + 1  # shifting index
 	df_new = df_new.sort_index()
 	last_30_days = df_new[-30:].values
 
@@ -117,3 +119,30 @@ for x in range(5):
 	pred_price = scaler.inverse_transform(pred_price)
 	new_Pred = pred_price
 	print('Est Price: ' + str(pred_price))
+	preds.append(pred_price)
+
+
+def copy_csv():
+    import pandas as pd
+    df = pd.read_csv('data_final.csv')
+    df.to_csv('data_predictions.csv')
+copy_csv()
+count = 181
+
+with open('data_predictions.csv', 'a+', newline='') as write_obj:
+	# Create a writer object from csv module
+	csv_writer = csv.writer(write_obj)
+	for row in preds:
+		str_pred = str(row)
+		str_pred = str_pred.replace('[[', '')
+		str_pred = str_pred.replace(']]', '')
+		csv_writer.writerow([str(count),str_pred,'0',str(count)])
+		count += 1
+
+dataframe = read_csv('data_predictions.csv', usecols=[1], engine='python')
+dataset = dataframe.values
+dataset = dataset.astype('float32')
+
+plt.plot(dataset, label='Future Predictions')
+plt.legend()
+plt.show()

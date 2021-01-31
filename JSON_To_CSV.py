@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 import time
 
-solditems = requests.get('https://secure.runescape.com/m=itemdb_rs/api/graph/11718.json') # (your url)
+solditems = requests.get('https://secure.runescape.com/m=itemdb_rs/api/graph/11720.json') # (your url)
 data = solditems.json()
 with open('data.json', 'w') as f:
     json.dump(data, f)
