@@ -20,12 +20,12 @@ def create_dataset(dataset, look_back=10):
 		dataY.append(dataset[i + look_back, 0])
 	return numpy.array(dataX), numpy.array(dataY)
 
-def LSTM_Predict(columnUsed,columnToPredictName):
+def LSTM_Predict(columnUsed,columnToPredictName, item):
 	# fix random seed for reproducibility
 	numpy.random.seed(7)
 
 	# load the dataset
-	dataframe = read_csv('data_final.csv', usecols=[columnUsed], engine='python')
+	dataframe = read_csv('data_'+item+'.csv', usecols=[columnUsed], engine='python')
 	dataset = dataframe.values
 	dataset = dataset.astype('float32')
 
@@ -39,7 +39,7 @@ def LSTM_Predict(columnUsed,columnToPredictName):
 	train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
 
 	# reshape into X=t and Y=t+1
-	look_back = 10
+	look_back = 20
 	trainX, trainY = create_dataset(train, look_back)
 	testX, testY = create_dataset(test, look_back)
 
@@ -52,7 +52,7 @@ def LSTM_Predict(columnUsed,columnToPredictName):
 	model.add(LSTM(4, input_shape=(look_back, 1)))
 	model.add(Dense(1))
 	model.compile(loss='mean_squared_error', optimizer='adam')
-	model.fit(trainX, trainY, epochs=200, batch_size=1, verbose=2)
+	model.fit(trainX, trainY, epochs=2000, batch_size=16, verbose=1, steps_per_epoch=4)
 
 	# make predictions
 	trainPredict = model.predict(trainX)
@@ -87,11 +87,11 @@ def LSTM_Predict(columnUsed,columnToPredictName):
 	#plt.show()
 
 	from sklearn.preprocessing import StandardScaler
-	data = pandas.read_csv('data_final.csv')
+	data = pandas.read_csv('data_'+item+'.csv')
 	data.head()
 
 	df_new = data[[columnToPredictName]]
-	last_30_days = df_new[-60:].values
+	last_30_days = df_new[-180:].values
 
 	scaler = MinMaxScaler(feature_range=(0, 1))
 
@@ -116,7 +116,7 @@ def LSTM_Predict(columnUsed,columnToPredictName):
 		df_new.loc[len(df_new)] = float(str_pred)
 		df_new.index = df_new.index + 1  # shifting index
 		df_new = df_new.sort_index()
-		last_30_days = df_new[-60:].values
+		last_30_days = df_new[-180:].values
 
 		scaler = MinMaxScaler(feature_range=(0, 1))
 
@@ -135,42 +135,38 @@ def LSTM_Predict(columnUsed,columnToPredictName):
 		preds.append(pred_price)
 	return preds
 
-averagePreds = LSTM_Predict(1,'average')
-dailyPreds = LSTM_Predict(0,'daily')
+with open('items.txt', 'r') as items:
+	for item in items:
+		averagePreds = LSTM_Predict(1,'average', item)
+		dailyPreds = LSTM_Predict(0,'daily', item)
+		df = pandas.read_csv('data_'+item+'.csv')
+		df.to_csv('data_'+item+'_predictions.csv')
+		count = 181
+		with open('data_'+item+'_predictions.csv', 'a+', newline='') as write_obj:
+			# Create a writer object from csv module
+			csv_writer = csv.writer(write_obj)
+			index = 0
+			for row in averagePreds:
+				str_Average_pred = str(row)
+				str_Average_pred = str_Average_pred.replace('[[', '')
+				str_Average_pred = str_Average_pred.replace(']]', '')
 
-def copy_csv():
-    import pandas as pd
-    df = pd.read_csv('data_final.csv')
-    df.to_csv('data_predictions.csv')
-copy_csv()
-count = 181
+				str_Daily_Pred = str(dailyPreds[index])
+				str_Daily_Pred = str_Daily_Pred.replace('[[', '')
+				str_Daily_Pred = str_Daily_Pred.replace(']]', '')
+				index += 1
+				csv_writer.writerow([str(count - 1),str_Daily_Pred,str_Average_pred,str(count)])
+				count += 1
+				dataframe = read_csv('data_'+item+'_predictions.csv', usecols=[2], engine='python')
+				dataset = dataframe.values
+				dataset = dataset.astype('float32')
 
-with open('data_predictions.csv', 'a+', newline='') as write_obj:
-	# Create a writer object from csv module
-	csv_writer = csv.writer(write_obj)
-	index = 0
-	for row in averagePreds:
-		str_Average_pred = str(row)
-		str_Average_pred = str_Average_pred.replace('[[', '')
-		str_Average_pred = str_Average_pred.replace(']]', '')
+				plt.plot(dataset, label='Future Predictions')
 
-		str_Daily_Pred = str(dailyPreds[index])
-		str_Daily_Pred = str_Daily_Pred.replace('[[', '')
-		str_Daily_Pred = str_Daily_Pred.replace(']]', '')
-  
-		csv_writer.writerow([str(count - 1),str_Daily_Pred,str_Average_pred,str(count)])
-		count += 1
+				dataframe2 = read_csv('data_'+item+'_predictions.csv', usecols=[1], engine='python')
+				dataset2 = dataframe2.values
+				dataset2 = dataset2.astype('float32')
 
-dataframe = read_csv('data_predictions.csv', usecols=[2], engine='python')
-dataset = dataframe.values
-dataset = dataset.astype('float32')
-
-plt.plot(dataset, label='Future Predictions')
-
-dataframe2 = read_csv('data_predictions.csv', usecols=[1], engine='python')
-dataset2 = dataframe2.values
-dataset2 = dataset2.astype('float32')
-
-plt.plot(dataset2, label='Daily Price')
-plt.legend()
-plt.show()
+				plt.plot(dataset2, label='Daily Price')
+				plt.legend()
+				plt.show()
