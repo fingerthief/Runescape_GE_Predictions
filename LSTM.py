@@ -91,7 +91,7 @@ def LSTM_Predict(columnUsed,columnToPredictName):
 	data.head()
 
 	df_new = data[[columnToPredictName]]
-	last_30_days = df_new[-30:].values
+	last_30_days = df_new[-60:].values
 
 	scaler = MinMaxScaler(feature_range=(0, 1))
 
@@ -116,7 +116,7 @@ def LSTM_Predict(columnUsed,columnToPredictName):
 		df_new.loc[len(df_new)] = float(str_pred)
 		df_new.index = df_new.index + 1  # shifting index
 		df_new = df_new.sort_index()
-		last_30_days = df_new[-30:].values
+		last_30_days = df_new[-60:].values
 
 		scaler = MinMaxScaler(feature_range=(0, 1))
 

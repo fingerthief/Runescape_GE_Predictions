@@ -1,6 +1,7 @@
 import math
 import matplotlib
 import numpy as np
+from numpy.core.numerictypes import ScalarType
 import pandas as pd
 import seaborn as sns
 import time
@@ -161,7 +162,7 @@ plt.ylabel('MAPE')
 N_opt = 5
 
 # Specify the day you are interested in
-day = 185
+day = 200
 
 # Specify the maximum N you want to plot (If Nmax2 is too large it gets very cluttered) 
 Nmax2 = 5
@@ -272,10 +273,31 @@ ax = test.plot(x='day', y='est_N5', style='rx-', grid=True, ax=ax)
 ax.legend(['test', 'predictions using linear regression'], loc='upper left')
 ax.set_xlabel("day")
 ax.set_ylabel("Price")
-plt.show()
-# ax.set_xlim([date(2018, 4, 23), date(2018, 11, 23)])
-# ax.set_ylim([130, 155])
+#plt.show()
 
-# Save as csv
+# from sklearn.preprocessing import StandardScaler
+# data = pd.read_csv('data_final.csv')
+# data.head()
+# # Let’s select some features to explore more :
+# df_new = data[['daily']]
+# last_30_days = df_new[-30:].values
+
+# scaler = StandardScaler()
+# scaler.fit(last_30_days)
+# last_30_days_scaled = scaler.transform(last_30_days)
+
+# X_test = []
+# X_test.append(last_30_days_scaled)
+# X_test = np.array(X_test)
+
+# X_test = np.reshape(X_test, (X_test.shape[0], X_test.shape[1],1))
+
+# pred_price = regr.predict(X_test)
+# pred_price = scaler.inverse_transform(pred_price)
+
+# print('Est Price: ' + str(pred_price))
+
+# Save as 
+# csv
 test_lin_reg = test
 test_lin_reg.to_csv("test_lin_reg.csv")
