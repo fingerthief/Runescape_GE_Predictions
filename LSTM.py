@@ -87,7 +87,7 @@ def LSTM_Predict(columnUsed,columnToPredictName, item):
 	#plt.show()
 
 	from sklearn.preprocessing import StandardScaler
-	data = pandas.read_csv('data_'+item+'_final.csv')
+	data = pandas.read_csv('data_'+item+'.csv')
 	data.head()
 
 	df_new = data[[columnToPredictName]]
@@ -139,7 +139,7 @@ with open('items.txt', 'r') as items:
 	for item in items:
 		averagePreds = LSTM_Predict(1,'average', item)
 		dailyPreds = LSTM_Predict(0,'daily', item)
-		df = pandas.read_csv('data_'+item+'_final.csv')
+		df = pandas.read_csv('data_'+item+'.csv')
 		df.to_csv('data_'+item+'_predictions.csv')
 		count = 181
 		with open('data_'+item+'_predictions.csv', 'a+', newline='') as write_obj:
