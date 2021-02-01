@@ -137,6 +137,7 @@ def LSTM_Predict(columnUsed,columnToPredictName, item):
 
 with open('items.txt', 'r') as items:
 	for item in items:
+		item = str(item).replace('\n','')
 		averagePreds = LSTM_Predict(1,'average', item)
 		dailyPreds = LSTM_Predict(0,'daily', item)
 		df = pandas.read_csv('data_'+item+'.csv')
