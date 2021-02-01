@@ -6,39 +6,41 @@ import pandas as pd
 import requests
 import time
 
-solditems = requests.get('https://secure.runescape.com/m=itemdb_rs/api/graph/11694.json') # (your url)
-data = solditems.json()
-with open('data.json', 'w') as f:
-    json.dump(data, f)
+def DownloadJSON(item):
+    solditems = requests.get('https://secure.runescape.com/m=itemdb_rs/api/graph/'+item +'.json') # (your url)
+    data = solditems.json()
+    with open('data.json', 'w') as f:
+        json.dump(data, f)
 
-df = pd.read_json (r'data.json')
-export_csv = df.to_csv (r'data.csv', index = None, header=True)
+def ConvertJSONtoCSV(filename):
+    df = pd.read_json(filename)
+    df.to_csv('data.csv', index=None, header=True)
 
-fr = open('data.csv', 'r')
-reader = csv.reader(fr)
-writer = csv.writer(open('data_final.csv', 'w'))
-headers = next(reader)
-headers.append("day")
-writer.writerow(headers)
-count = 1
-for row in reader:
-    row.append(str(count))
-    writer.writerow(row)
-    count += 1
-
-fr.close()
-os.remove('data.csv')
-
-def csvAdder():
-    fr = open('message.csv', 'r')
-    reader = csv.reader(fr)
-    writer = csv.writer(open('messages_final.csv', 'w'))
+def AddDataToCSV(reader):
+    file = open('data_'+item+'.csv', 'w')
+    writer = csv.writer(file)
     headers = next(reader)
     headers.append("day")
     writer.writerow(headers)
     count = 1
     for row in reader:
-        row.append(str(count))
-        writer.writerow(row)
+        #time.sleep(0.1)
+        r = row
+        r.append(str(count))
+        print (str(row))
+        writer.writerow(r)
         count += 1
+    file.flush()
+    file.close()
 
+with open('items.txt', 'r') as items:
+    for item in items:
+        item = item.replace('\n','')
+        print (item)
+        DownloadJSON(item)
+        ConvertJSONtoCSV('data.json')
+        fr = open('data.csv', 'r')
+        reader = csv.reader(fr)
+        AddDataToCSV(reader)
+        fr.close()
+        os.remove('data.csv')
