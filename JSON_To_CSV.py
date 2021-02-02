@@ -33,6 +33,10 @@ def AddDataToCSV(reader):
     file.flush()
     file.close()
 
+for fname in os.listdir('.'):
+    if fname.startswith("data_"):
+        os.remove(os.path.join('.', fname))
+
 with open('items.txt', 'r') as items:
     for item in items:
         item = item.replace('\n','')

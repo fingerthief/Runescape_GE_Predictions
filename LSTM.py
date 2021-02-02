@@ -10,6 +10,7 @@ from keras.layers import LSTM
 import pandas
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
+import bs4 as bs
 
 # convert an array of values into a dataset matrix
 def create_dataset(dataset, look_back=10):
@@ -20,7 +21,7 @@ def create_dataset(dataset, look_back=10):
 		dataY.append(dataset[i + look_back, 0])
 	return numpy.array(dataX), numpy.array(dataY)
 
-def LSTM_Predict(columnUsed,columnToPredictName, item, plotNum):
+def LSTM_Predict(columnUsed,columnToPredictName, item, plotNum,itemName):
 	# fix random seed for reproducibility
 	numpy.random.seed(7)
 
@@ -39,7 +40,7 @@ def LSTM_Predict(columnUsed,columnToPredictName, item, plotNum):
 	train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
 
 	# reshape into X=t and Y=t+1
-	look_back = 20
+	look_back = 10
 	trainX, trainY = create_dataset(train, look_back)
 	testX, testY = create_dataset(test, look_back)
 
@@ -86,7 +87,7 @@ def LSTM_Predict(columnUsed,columnToPredictName, item, plotNum):
 	plt.plot(scaler.inverse_transform(dataset),label='Base Data')
 	plt.plot(trainPredictPlot,label='Train Prediction')
 	plt.plot(testPredictPlot,label='Test Prediction')
-	plt.title(item)
+	plt.title(itemName)
 	#plt.show()
 
 	from sklearn.preprocessing import StandardScaler
@@ -135,13 +136,18 @@ def LSTM_Predict(columnUsed,columnToPredictName, item, plotNum):
 	return preds
 
 import pandas as pd
+def GetItemName(item):
+	itemDetails = 'http://services.runescape.com/m=itemdb_rs/api/catalogue/detail.json?item='  + item
+	df = pd.read_json(itemDetails)
+	return df['item']['name']
+
 plotCount = 1
 with open('items.txt', 'r') as items:
 	for item in items:
 		item = item.replace('\n','')
-  
-		averagePreds = LSTM_Predict(1,'average',item, plotCount)
-		dailyPreds = LSTM_Predict(0,'daily', item,plotCount)
+		itemName = GetItemName(item) + ' | Item: ' + item
+		averagePreds = LSTM_Predict(1,'average',item, plotCount, itemName)
+		dailyPreds = LSTM_Predict(0,'daily', item,plotCount,itemName)
   
 		df = pd.read_csv('data_' + item + '.csv')
 		df.to_csv('data_' + item + '_predictions.csv')
