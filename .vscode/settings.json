@@ -1,4 +1,4 @@
 {
     "jupyter.jupyterServerType": "local",
-    "python.pythonPath": "C:\\Users\\Tanner\\AppData\\Local\\Programs\\Python\\Python38\\python.exe"
+    "python.pythonPath": "/usr/bin/python3.8"
 }
