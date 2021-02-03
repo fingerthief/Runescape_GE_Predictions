@@ -16,13 +16,16 @@ def create_dataset(dataset, look_back=10):
 		dataY.append(dataset[i + look_back])
 	return numpy.array(dataX), numpy.array(dataY)
 
-def LSTM_Train(columnUsed, item):
+def LSTM_Train(columnUsed=[1,2], item='52'):
 
 	# fix random seed for reproducibility
 	#numpy.random.seed(7)
 
 	# load the dataset
-	dataframe = read_csv('data_'+item+'.csv', usecols=['daily','average'], engine='python')
+	#dataframe = read_csv('data_'+item+'.csv', usecols=[1,2], engine='python')
+	llist = read_csv('data_joined.csv', nrows=1).columns.tolist()
+	llist.remove('day')
+	dataframe = read_csv('data_joined.csv', usecols=llist, engine='python')
 	dataset = dataframe.values
 	dataset = dataset.astype('float32')
 
@@ -41,15 +44,15 @@ def LSTM_Train(columnUsed, item):
 	testX, testY = create_dataset(test, look_back)
 
 	# reshape input to be [samples, time steps, features]
-	trainX = numpy.reshape(trainX, (trainX.shape[0], trainX.shape[1], 2))
-	testX = numpy.reshape(testX, (testX.shape[0], testX.shape[1], 2))
+	trainX = numpy.reshape(trainX, (trainX.shape[0], trainX.shape[1], len(llist)))
+	testX = numpy.reshape(testX, (testX.shape[0], testX.shape[1], len(llist)))
 
 	# create and fit the LSTM network
 	model = Sequential()
-	model.add(LSTM(4, input_shape=(look_back, 2)))
-	model.add(Dense(2))
+	model.add(LSTM(len(llist)*4, input_shape=(look_back, len(llist))))
+	model.add(Dense(len(llist)))
 	model.compile(loss='mean_squared_error', optimizer='adam')
-	model.fit(trainX, trainY, epochs=20, batch_size=16, verbose=0, steps_per_epoch=4)
+	model.fit(trainX, trainY, epochs=20000, batch_size=16, verbose=2, steps_per_epoch=4)
 
 	# make predictions
 	#trainPredict = model.predict(trainX)
@@ -64,17 +67,16 @@ def LSTM_Train(columnUsed, item):
 	# calculate root mean squared error
 	#trainScore = math.sqrt(mean_squared_error(trainY[0], trainPredict[:,0]))
 	#print('Train Score: %.2f RMSE' % (trainScore))
-	testScore = math.sqrt(mean_squared_error(testY[:,0], testPredict[:,0]))
-	testScore1 = math.sqrt(mean_squared_error(testY[:,1], testPredict[:,1]))
+	for i in range(len(llist)):
+		testScore = math.sqrt(mean_squared_error(testY[:,i], testPredict[:,i]))
+		print('Test Score: %.2f RMSE' % (testScore))
 
-	print('Test Score: %.2f RMSE' % (testScore))
-	print('Test Score: %.2f RMSE' % (testScore1))
+	model.save('_model')
 
-	model.save('model')
+LSTM_Train()
 
-
-with open('items.txt', 'r') as items:
-	for item in items:
-		item = str(item).replace('\n','')
-		LSTM_Train([1,2], item)
-		print ('done with item: ' + item)
+#with open('items.txt', 'r') as items:
+#	for item in items:
+#		item = str(item).replace('\n','')
+#		LSTM_Train([1,2], item)
+#		print ('done with item: ' + item)

@@ -13,12 +13,15 @@ def create_dataset(dataset, look_back=10):
 		dataY.append(dataset[i + look_back])
 	return numpy.array(dataX), numpy.array(dataY)
 
-def LSTM_Predict(columnUsed,columnToPredictName, item):
+def LSTM_Predict():
 	# fix random seed for reproducibility
 	numpy.random.seed(7)
 
 	# load the dataset
-	dataframe = read_csv('data_'+item+'.csv', usecols=['daily','average'], engine='python')
+	#dataframe = read_csv('data_'+item+'.csv', usecols=['daily','average'], engine='python')
+	llist = read_csv('data_joined.csv', nrows=1).columns.tolist()
+	llist.remove('day')
+	dataframe = read_csv('data_joined.csv', usecols=llist, engine='python')
 	dataset = dataframe.values
 	dataset = dataset.astype('float32')
 
@@ -31,15 +34,15 @@ def LSTM_Predict(columnUsed,columnToPredictName, item):
 	test_size = len(dataset) - train_size
 	train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
 	# reshape into X=t and Y=t+1
-	look_back = 20
+	look_back = 10
 	trainX, trainY = create_dataset(train, look_back)
 	testX, testY = create_dataset(test, look_back)
 
 	# reshape input to be [samples, time steps, features]
-	trainX = numpy.reshape(trainX, (trainX.shape[0], trainX.shape[1], 2))
-	testX = numpy.reshape(testX, (testX.shape[0], testX.shape[1], 2))
+	trainX = numpy.reshape(trainX, (trainX.shape[0], trainX.shape[1], len(llist)))
+	testX = numpy.reshape(testX, (testX.shape[0], testX.shape[1], len(llist)))
 
-	model = load_model('model')
+	model = load_model('_model')
 	
 	# make predictions
 	trainPredict = model.predict(trainX)
@@ -51,10 +54,7 @@ def LSTM_Predict(columnUsed,columnToPredictName, item):
 	testPredict = scaler.inverse_transform(testPredict)
 	testY = scaler.inverse_transform(testY)
 
-	data = read_csv('data_'+item+'.csv')
-	data.head()
-
-	df_new = data[['daily', 'average']]
+	df_new = dataframe
 	last_30_days = df_new[-180:].values
 
 	scaler = MinMaxScaler(feature_range=(0, 1))
@@ -65,7 +65,7 @@ def LSTM_Predict(columnUsed,columnToPredictName, item):
 	X_test.append(last_30_days_scaled)
 	X_test_np = numpy.array(X_test)
 
-	X_test_np = numpy.reshape(X_test_np, (X_test_np.shape[0], X_test_np.shape[1],2))
+	X_test_np = numpy.reshape(X_test_np, (X_test_np.shape[0], X_test_np.shape[1],len(llist)))
 	
 	pred_price = model.predict(X_test_np)
 	pred_price = scaler.inverse_transform(pred_price)
@@ -74,9 +74,10 @@ def LSTM_Predict(columnUsed,columnToPredictName, item):
 	new_Pred = pred_price
 	preds = []
 	for x in range(10):
-		str_predA = new_Pred[0][0]
-		str_predB = new_Pred[0][1]
-		df_new.loc[len(df_new)] = [str_predA, str_predB]
+		p = []
+		for ii in range(len(new_Pred[0])):
+			p.append(new_Pred[0][ii])
+		df_new.loc[len(df_new)] = p
 		df_new.index = df_new.index + 1 # shifting index
 		df_new = df_new.sort_index()
 		last_30_days = df_new[-180:].values
@@ -89,7 +90,7 @@ def LSTM_Predict(columnUsed,columnToPredictName, item):
 		X_test.append(last_30_days_scaled)
 		X_test_np = numpy.array(X_test)
 
-		X_test_np = numpy.reshape(X_test_np, (X_test_np.shape[0], X_test_np.shape[1],2))
+		X_test_np = numpy.reshape(X_test_np, (X_test_np.shape[0], X_test_np.shape[1],len(llist)))
 
 		pred_price = model.predict(X_test_np)
 		pred_price = scaler.inverse_transform(pred_price)
@@ -98,19 +99,24 @@ def LSTM_Predict(columnUsed,columnToPredictName, item):
 		preds.append(pred_price)
 	return preds
 
-with open('items.txt', 'r') as items:
-	for item in items:
-		item = str(item).replace('\n','')
-		averagePreds = LSTM_Predict([1,2],'average', item)
-		df = read_csv('data_'+item+'.csv')
-		df.to_csv('data_'+item+'_predictions.csv')
-		count = 181
-		with open('data_'+item+'_predictions.csv', 'a+', newline='') as write_obj:
-			# Create a writer object from csv module
-			csv_writer = csv.writer(write_obj)
 
-			for i in range(len(averagePreds)):
-				str_Average_pred = averagePreds[i][0][1]
-				str_Daily_Pred = averagePreds[i][0][0]
-				csv_writer.writerow([str(count - 1),str_Daily_Pred,str_Average_pred,str(count)])
-				count += 1
+predictions = LSTM_Predict()
+df = read_csv('data_joined.csv')
+df.to_csv('data_predictions.csv', index=None)
+count = 181
+with open('data_predictions.csv', 'a+', newline='') as write_obj:
+	# Create a writer object from csv module
+	csv_writer = csv.writer(write_obj)
+
+	# build row
+	
+	for i in range(len(predictions)):
+		str_pred = [str(count - 1)]
+		one = predictions
+		two = predictions[i]
+		three = predictions[i][0]
+		for ei in range(len(predictions[i][0])):
+			str_pred.append(predictions[i][0][ei])
+		
+		csv_writer.writerow(str_pred)
+		count += 1
