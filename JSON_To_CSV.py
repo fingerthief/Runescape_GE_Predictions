@@ -16,7 +16,7 @@ def ConvertJSONtoCSV(filename):
     df = pd.read_json(filename)
     df.to_csv('data.csv', index=None, header=True)
 
-def AddDataToCSV(reader):
+def AddDataToCSV(reader, item):
     file = open('data_'+item+'.csv', 'w')
     writer = csv.writer(file)
     headers = next(reader)
@@ -33,18 +33,20 @@ def AddDataToCSV(reader):
     file.flush()
     file.close()
 
-for fname in os.listdir('.'):
-    if fname.startswith("data_"):
-        os.remove(os.path.join('.', fname))
+def Convert_JSON_to_CSV():
 
-with open('items.txt', 'r') as items:
-    for item in items:
-        item = item.replace('\n','')
-        print (item)
-        DownloadJSON(item)
-        ConvertJSONtoCSV('data.json')
-        fr = open('data.csv', 'r')
-        reader = csv.reader(fr)
-        AddDataToCSV(reader)
-        fr.close()
-        os.remove('data.csv')
+    for fname in os.listdir('.'):
+        if fname.startswith("data_"):
+            os.remove(os.path.join('.', fname))
+
+    with open('items.txt', 'r') as items:
+        for item in items:
+            item = item.replace('\n','')
+            print (item)
+            DownloadJSON(item)
+            ConvertJSONtoCSV('data.json')
+            fr = open('data.csv', 'r')
+            reader = csv.reader(fr)
+            AddDataToCSV(reader, item)
+            fr.close()
+            os.remove('data.csv')
