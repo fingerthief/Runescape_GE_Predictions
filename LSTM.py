@@ -48,11 +48,13 @@ def LSTM_Train(columnUsed=[1,2], item='52'):
 	testX = numpy.reshape(testX, (testX.shape[0], testX.shape[1], len(llist)))
 
 	# create and fit the LSTM network
+	batch_size=4
+	steps_per_epoch=math.ceil(len(trainX)/batch_size)
 	model = Sequential()
-	model.add(LSTM(len(llist)*4, input_shape=(look_back, len(llist))))
+	model.add(LSTM(len(llist)*32, input_shape=(look_back, len(llist))))
 	model.add(Dense(len(llist)))
 	model.compile(loss='mean_squared_error', optimizer='adam')
-	model.fit(trainX, trainY, epochs=20000, batch_size=16, verbose=2, steps_per_epoch=4)
+	model.fit(trainX, trainY, epochs=50, batch_size=batch_size, verbose=1, steps_per_epoch=steps_per_epoch)
 
 	# make predictions
 	#trainPredict = model.predict(trainX)
