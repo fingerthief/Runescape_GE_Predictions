@@ -52,20 +52,37 @@ def LSTM_Predict(item, plotNum,itemName):
 	# create and fit the LSTM network
 	model = Sequential()
 	#model.add(LSTM(4, input_shape=(look_back, 2)))
-
+	batchsize = 2
 	# model.fit(trainX, trainY, epochs=2000, batch_size=16, verbose=1, steps_per_epoch=4)
-	model.add(LSTM(32, batch_input_shape=(2, look_back, 2), stateful=True, return_sequences=True))
-	model.add(LSTM(32, batch_input_shape=(2, look_back, 2), stateful=True))
+	model.add(LSTM(4, batch_input_shape=(batchsize, look_back, 2), stateful=True, return_sequences=True))
+	model.add(LSTM(4, batch_input_shape=(batchsize, look_back, 2), stateful=True))
 	model.add(Dense(2))
-	model.compile(loss='mean_squared_error', optimizer='adam')
+	model.add(Dropout(0.2))
+	model.add(Dense(2))
+	model.add(Dropout(0.2))
+	model.add(Dense(2))
 
-	for i in range(600):
-		model.fit(trainX, trainY, epochs=1, batch_size=2, verbose=2, shuffle=False, use_multiprocessing=True)
+	model.compile(loss='mean_squared_error', optimizer='adam')
+	val_loss = []
+	loss = []
+
+	steps = math.ceil(len(trainX)/batchsize)
+	for i in range(300):
+		test = model.fit(trainX, trainY, epochs=1,steps_per_epoch=steps, validation_data=(trainX, trainY) ,  batch_size=batchsize, verbose=2, shuffle=False)
+		val_loss.append(test.history['val_loss'])
+		loss.append(test.history['loss'])
 		model.reset_states()
- 
+	
+
+	plt.figure(2)
+	plt.plot(loss)
+	plt.plot(val_loss)
+	plt.legend(['loss','val_loss'])
+	plt.title('Loss vs Valudation Loss')
+	plt.show()
 	# make predictions
-	trainPredict = model.predict(trainX,batch_size=2)
-	testPredict = model.predict(testX,batch_size=2)
+	trainPredict = model.predict(trainX,batch_size=batchsize)
+	testPredict = model.predict(testX,batch_size=batchsize)
 
 	# invert predictions
 	trainPredict = scaler.inverse_transform(trainPredict)
@@ -124,7 +141,7 @@ def LSTM_Predict(item, plotNum,itemName):
 	new_Pred = pred_price
 	preds = []
 	for x in range(10):
-		df_new.loc[len(df_new)] = [new_Pred[0][0],new_Pred[0][1]]
+		df_new.loc[len(df_new) + 1] = [new_Pred[0][0],new_Pred[0][1]]
 
 		df_new.index = df_new.index + 1  # shifting index
 		df_new = df_new.sort_index()

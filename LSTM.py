@@ -37,24 +37,43 @@ def LSTM_Predict(item, plotNum,itemName):
 	dataset = scaler.fit_transform(dataset)
 
 	# split into train and test sets
-	train_size = int(len(dataset) * 0.75)
-	train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
+	train_size = int(len(dataset) * 0.9)
+	train, model_info = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
 
 	# reshape into X=t and Y=t+1
 	look_back = 10
 	trainX, trainY = create_dataset(train, look_back)
-	testX, testY = create_dataset(test, look_back)
+	testX, testY = create_dataset(model_info, look_back)
 
 	# reshape input to be [samples, time steps, features]
 	trainX = numpy.reshape(trainX, (trainX.shape[0], trainX.shape[1],2))
 	testX = numpy.reshape(testX, (testX.shape[0], testX.shape[1],2))
+	batchSize = 16
+	steps = math.ceil(len(trainX)/batchSize)
 
 	# create and fit the LSTM network
 	model = Sequential()
-	model.add(LSTM(8, input_shape=(look_back, 2)))
+	model.add(LSTM(16, input_shape=(look_back, 2)))
 	model.add(Dense(2))
+	model.add(Dropout(0.05))
+	model.add(Dense(2))
+	model.add(Dropout(0.05))
+	model.add(Dense(2))
+	model.add(Dropout(0.05))
+	model.add(Dense(2))
+
+
 	model.compile(loss='mean_squared_error', optimizer='adam')
-	model.fit(trainX, trainY, epochs=2000, batch_size=16, verbose=1, steps_per_epoch=4)
+	model_info = model.fit(trainX, trainY, epochs=1000, validation_data=(trainX, trainY) , batch_size=batchSize, verbose=1, steps_per_epoch=4)
+	val_loss = model_info.history['val_loss']
+	loss = model_info.history['loss']
+
+	plt.figure(2)
+	plt.plot(loss)
+	plt.plot(val_loss)
+	plt.legend(['loss','val_loss'])
+	plt.title('Loss vs Validation Loss')
+	plt.show()
 
 	# make predictions
 	trainPredict = model.predict(trainX)
@@ -117,7 +136,7 @@ def LSTM_Predict(item, plotNum,itemName):
 	new_Pred = pred_price
 	preds = []
 	for x in range(10):
-		df_new.loc[len(df_new)] = [new_Pred[0][0],new_Pred[0][1]]
+		df_new.loc[len(df_new) + 1] = [new_Pred[0][0],new_Pred[0][1]]
 
 		df_new.index = df_new.index + 1  # shifting index
 		df_new = df_new.sort_index()
