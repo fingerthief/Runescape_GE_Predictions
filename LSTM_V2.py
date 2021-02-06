@@ -37,7 +37,7 @@ def LSTM_Predict(item, plotNum,itemName):
 	dataset = scaler.fit_transform(dataset)
 
 	# split into train and test sets
-	train_size = int(len(dataset) * 0.75)
+	train_size = int(len(dataset) * 0.9)
 	train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
 
 	# reshape into X=t and Y=t+1
@@ -52,15 +52,14 @@ def LSTM_Predict(item, plotNum,itemName):
 	# create and fit the LSTM network
 	model = Sequential()
 	#model.add(LSTM(4, input_shape=(look_back, 2)))
-	batchsize = 2
+	batchsize = 1
 	# model.fit(trainX, trainY, epochs=2000, batch_size=16, verbose=1, steps_per_epoch=4)
-	model.add(LSTM(4, batch_input_shape=(batchsize, look_back, 2), stateful=True, return_sequences=True))
-	model.add(LSTM(4, batch_input_shape=(batchsize, look_back, 2), stateful=True))
+	model.add(LSTM(32, batch_input_shape=(batchsize, look_back, 2), stateful=True, return_sequences=True))
+	model.add(LSTM(32, batch_input_shape=(batchsize, look_back, 2), stateful=True))
 	model.add(Dense(2))
-	model.add(Dropout(0.2))
+	model.add(Dropout(0.05))
 	model.add(Dense(2))
-	model.add(Dropout(0.2))
-	model.add(Dense(2))
+
 
 	model.compile(loss='mean_squared_error', optimizer='adam')
 	val_loss = []
